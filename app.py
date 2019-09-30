@@ -12,6 +12,13 @@ from transliterate import translit, get_available_language_codes
 app = Flask(__name__)
 app.secret_key = os.urandom(64).hex()
 
+def Initialize():
+    if os.path.exists('classes_info') == False:
+        os.mkdir('classes_info')
+        for i in range(8,12):
+            os.mkdir('classes_info/class_'+str(i))
+        os.mkdir('classes_info/other')
+
 def ParseAnswerString(ans_str):
     Answers = set()
     for i in str(ans_str):
@@ -21,6 +28,13 @@ def ParseAnswerString(ans_str):
         except:
             pass
     return Answers
+
+def ProceedQuery(query):
+    if query['first_name'] and query['surname']:
+
+        class_n = query['class_n']
+    else:
+        return -1
 
 @app.route('/')
 def index():
@@ -36,27 +50,23 @@ def student():
 
 @app.route('/submit_answers')
 def submit():
-    
-    first_name = translit(request.args.get("first_name").lower(), 'ru', reversed = True)
-    surname = translit(request.args.get("surname").lower(), 'ru', reversed = True)
-    email = request.args.get("email").lower()
-    class_n = request.args.get("class")
-    topic = request.args.get("test_name")
-    var = request.args.get("variant")
+    query = OrderedDict()
+    query['first_name'] = translit(request.args.get("first_name").lower(), 'ru', reversed = True)
+    query['surname'] = translit(request.args.get("surname").lower(), 'ru', reversed = True)
+    query['email'] = request.args.get("email").lower()
+    query['class_n'] = request.args.get("class")
+    query['topic'] = request.args.get("test_name")
+    query['var'] = request.args.get("variant")
     answers = OrderedDict()
     for i in range(10):
         a = request.args.get("q"+str(i+1))
         answers["q"+str(i+1)] = ParseAnswerString(a)
-    print(answers, surname, first_name, email, class_n, topic, var)
-    #with open(name + ".json", "w") as f:
-    #    ans = json.dumps(answers)
-    #    f.write(ans)
+    query['ans'] = answers
+    print(query)
+    if ProceedQuery(query)==-1:
+        return(u"Не заданы имя или фамилия. Отправьте еще раз!")
     return(u"Ответ записан")
 
 if __name__ == '__main__':
-    if os.path.exists('classes_info') == False:
-        os.mkdir('classes_info')
-        for i in range(8,12):
-            os.mkdir('classes_info/class_'+str(i))
-        os.mkdir('classes_info/other')
+    Initialize()
     app.run(host='0.0.0.0',port='5000',debug=False)

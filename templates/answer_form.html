@@ -8,80 +8,122 @@
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
   <script src="{{ url_for('static', filename='hide_params1.js') }}"></script>
   
-  <!link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}">
+  
 </head>
 <body>
   
 <div class="container">
-  <h1>Test system</h1>
-  <p>Give answers</p>      
+  <h1>Тест</h1>
+  <p>Заполните информацию и введите ответы на выбранный тест. Ответ на вопрос - это последовательность номеров (ЦИФР) правильных ответов БЕЗ разделителей! Номера можно писать в любом порядке. Любые другие символы будут проигнорированы.</p>      
 </div>
 
 <div class="container">
   
-  <form action="/submit" method='GET'>
+  <form action="/submit_answers" method='GET'>
 
     <div class="form-group">
-      <label for="source">Фамилия, имя через пробел:</label>
-      <input type="text" class="form-control" id="test_name" placeholder="Enter name" name="test_name">
+      <label for="source">Введите email:</label>
+      <input type="text" class="form-control" id="email" placeholder="Email" name="email">
+    </div>
+
+    <div class="form-group">
+      <label for="source">Введите фамилию русскими буквами:</label>
+      <input type="text" class="form-control" id="surname" placeholder="Фамилия" name="surname">
+    </div>
+
+
+     <div class="form-group">
+      <label for="source">Введите имя русскими буквами:</label>
+      <input type="text" class="form-control" id="first_name" placeholder="Имя" name="first_name">
+    </div>
+  
+
+
+
+    <div class="form-group">
+      <label for="source">Тема теста:</label>
+      <input type="text" class="form-control" id="test_name" placeholder="Введите тему теста" name="test_name">
+    </div>
+
+    <div class="form-group">
+      <label for="class">Класс:</label>
+      <select id="class" name="class" >
+            <option value="8">8</option>
+            <option value="9">9</option>
+            <option value="10">10</option>
+            <option value="11">11</option>
+            <option value="other">Другой</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label for="source">Вариант:</label>
+      <select id="variant" name="variant" >
+      </select>
+    </div>
+
+    <script>
+          var x = document.getElementById("variant");
+          for (i =1; i < 30; i++) {
+              var option = document.createElement("option");
+              option.text = i.toString();
+              option.value = i.toString();
+              var q = i.toString();
+              x.add(option);
+          }
+    </script>
+
+    <div class="form-group">
+      <label for="source">Вопрос 1:</label>
+      <input type="text" class="form-control" id="q1" placeholder="Ответ 1" name="q1">
     </div>
     
     <div class="form-group">
-      <label for="source">Test unique name:</label>
-      <input type="text" class="form-control" id="test_name" placeholder="Enter test name here" name="test_name">
+      <label for="source">Вопрос 2:</label>
+      <input type="text" class="form-control" id="q2" placeholder="Ответ 2" name="q2">
     </div>
 
     <div class="form-group">
-      <label for="source">Question 1:</label>
-      <input type="text" class="form-control" id="q1" placeholder="Answer 1" name="q1">
-    </div>
-    
-    <div class="form-group">
-      <label for="source">Question 2:</label>
-      <input type="text" class="form-control" id="q2" placeholder="Answer 2" name="q2">
+      <label for="source">Вопрос 3:</label>
+      <input type="text" class="form-control" id="q3" placeholder="Ответ 3" name="q3">
     </div>
 
     <div class="form-group">
-      <label for="source">Question 3:</label>
-      <input type="text" class="form-control" id="q3" placeholder="Answer 3" name="q3">
+      <label for="source">Вопрос 4:</label>
+      <input type="text" class="form-control" id="q4" placeholder="Ответ 4" name="q4">
     </div>
 
     <div class="form-group">
-      <label for="source">Question 4:</label>
-      <input type="text" class="form-control" id="q4" placeholder="Answer 4" name="q4">
+      <label for="source">Вопрос 5:</label>
+      <input type="text" class="form-control" id="q5" placeholder="Ответ 5" name="q5">
     </div>
 
     <div class="form-group">
-      <label for="source">Question 5:</label>
-      <input type="text" class="form-control" id="q5" placeholder="Answer 5" name="q5">
+      <label for="source">Вопрос 6:</label>
+      <input type="text" class="form-control" id="q6" placeholder="Ответ 6" name="q6">
     </div>
 
     <div class="form-group">
-      <label for="source">Question 6:</label>
-      <input type="text" class="form-control" id="q6" placeholder="Answer 6" name="q6">
+      <label for="source">Вопрос 7:</label>
+      <input type="text" class="form-control" id="q7" placeholder="Ответ 7" name="q7">
     </div>
 
     <div class="form-group">
-      <label for="source">Question 7:</label>
-      <input type="text" class="form-control" id="q7" placeholder="Answer 7" name="q7">
+      <label for="source">Вопрос 8:</label>
+      <input type="text" class="form-control" id="q8" placeholder="Ответ 8" name="q8">
     </div>
 
     <div class="form-group">
-      <label for="source">Question 8:</label>
-      <input type="text" class="form-control" id="q8" placeholder="Answer 8" name="q8">
+      <label for="source">Вопрос 9:</label>
+      <input type="text" class="form-control" id="q9" placeholder="Ответ 9" name="q9">
     </div>
 
     <div class="form-group">
-      <label for="source">Question 9:</label>
-      <input type="text" class="form-control" id="q9" placeholder="Answer 9" name="q9">
+      <label for="source">Вопрос 10:</label>
+      <input type="text" class="form-control" id="q10" placeholder="Ответ 10" name="q10">
     </div>
 
-    <div class="form-group">
-      <label for="source">Question 10:</label>
-      <input type="text" class="form-control" id="q10" placeholder="Answer 10" name="q10">
-    </div>
-
-    <button type="submit" class="btn btn-primary">Submit</button>
+    <button type="submit" class="btn btn-primary">Отправить</button>
     
   </form>
 </div>

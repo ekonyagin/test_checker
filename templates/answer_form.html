@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>video</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+  <script src="{{ url_for('static', filename='hide_params1.js') }}"></script>
+  
+  <!link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}">
+</head>
+<body>
+  
+<div class="container">
+  <h1>Test system</h1>
+  <p>Give answers</p>      
+</div>
+
+<div class="container">
+  
+  <form action="/submit" method='GET'>
+
+    <div class="form-group">
+      <label for="source">Фамилия, имя через пробел:</label>
+      <input type="text" class="form-control" id="test_name" placeholder="Enter name" name="test_name">
+    </div>
+    
+    <div class="form-group">
+      <label for="source">Test unique name:</label>
+      <input type="text" class="form-control" id="test_name" placeholder="Enter test name here" name="test_name">
+    </div>
+
+    <div class="form-group">
+      <label for="source">Question 1:</label>
+      <input type="text" class="form-control" id="q1" placeholder="Answer 1" name="q1">
+    </div>
+    
+    <div class="form-group">
+      <label for="source">Question 2:</label>
+      <input type="text" class="form-control" id="q2" placeholder="Answer 2" name="q2">
+    </div>
+
+    <div class="form-group">
+      <label for="source">Question 3:</label>
+      <input type="text" class="form-control" id="q3" placeholder="Answer 3" name="q3">
+    </div>
+
+    <div class="form-group">
+      <label for="source">Question 4:</label>
+      <input type="text" class="form-control" id="q4" placeholder="Answer 4" name="q4">
+    </div>
+
+    <div class="form-group">
+      <label for="source">Question 5:</label>
+      <input type="text" class="form-control" id="q5" placeholder="Answer 5" name="q5">
+    </div>
+
+    <div class="form-group">
+      <label for="source">Question 6:</label>
+      <input type="text" class="form-control" id="q6" placeholder="Answer 6" name="q6">
+    </div>
+
+    <div class="form-group">
+      <label for="source">Question 7:</label>
+      <input type="text" class="form-control" id="q7" placeholder="Answer 7" name="q7">
+    </div>
+
+    <div class="form-group">
+      <label for="source">Question 8:</label>
+      <input type="text" class="form-control" id="q8" placeholder="Answer 8" name="q8">
+    </div>
+
+    <div class="form-group">
+      <label for="source">Question 9:</label>
+      <input type="text" class="form-control" id="q9" placeholder="Answer 9" name="q9">
+    </div>
+
+    <div class="form-group">
+      <label for="source">Question 10:</label>
+      <input type="text" class="form-control" id="q10" placeholder="Answer 10" name="q10">
+    </div>
+
+    <button type="submit" class="btn btn-primary">Submit</button>
+    
+  </form>
+</div>
+
+</body>  
+
+
+
+</html>

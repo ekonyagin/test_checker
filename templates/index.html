@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>video</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+  <script src="{{ url_for('static', filename='hide_params1.js') }}"></script>
+  
+</head>
+<body>
+  
+<div class="container">
+  <h1>Test system</h1>
+</div>
+
+
+<div class="row">
+  
+
+  <div class="col-sm-3">
+      <a href="/set_ans" class="btn btn-info" role="button">Set answers</a>
+  </div>
+
+  <div class="col-sm-3">
+      <a href="/view_ans" class="btn btn-info" role="button">View current answers</a>
+  </div>
+        
+  <div class="col-sm-3">
+      <a href="/check_upload" class="btn btn-info" role="button">Check results from a file</a>
+  </div>
+
+  <div class="col-sm-3">
+      <a href="/auto_check" class="btn btn-info" role="button">Check results automatically</a>
+  </div>
+</div>
+
+</body>  
+
+
+
+</html>

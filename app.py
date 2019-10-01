@@ -6,18 +6,48 @@ import socket
 from collections import OrderedDict
 import os
 import pandas as pd
-import checker
+import mail_sender
 from transliterate import translit, get_available_language_codes
+import sys
 
 app = Flask(__name__)
 app.secret_key = os.urandom(64).hex()
 
+def Score(ans,correct_ans):
+    if(len(ans - correct_ans)) !=0 or len(ans) == 0:
+        return 0
+    if ans == correct_ans:
+        return 2
+    else:
+        return 1
+
+def ApplyScore(answers, test_name,class_n, var):
+    try:
+        #print('correct_answers/'+test_name+"_"+str(var)+'.json')
+        with open('correct_answers/'+test_name+"_"+str(class_n)+"_"+str(var)+'.json') as json_file:
+            raw_answers = json.load(json_file)
+            print(raw_answers)
+            correct_answers = {}
+            for i in range(10):
+                a = raw_answers["q"+str(i+1)]
+                correct_answers["q"+str(i+1)] = ParseAnswerString(a)
+    except:
+        return -1
+    score = 0
+    for i in range(10):
+        score += Score(answers['q'+str(i+1)], correct_answers["q"+str(i+1)])
+    return score
+
 def Initialize():
+    
     if os.path.exists('classes_info') == False:
         os.mkdir('classes_info')
         for i in range(8,12):
             os.mkdir('classes_info/class_'+str(i))
         os.mkdir('classes_info/other')
+
+    if os.path.exists('correct_answers') == False:
+        os.mkdir('correct_answers')
 
 def ParseAnswerString(ans_str):
     Answers = set()
@@ -38,15 +68,51 @@ def ProceedQuery(query):
 
 @app.route('/')
 def index():
-    return render_template('answer_form.html')
+    return render_template('index.html')
 
-@app.route('/set_ans')
+@app.route('/request_code')
+def request_code():
+    email = sys.argv[1]
+    try:
+        session['key'] = mail_sender.CreateAccessCode(email)
+        return render_template("root_login_sent_code.html")
+    except:
+        return u'Произошла ошибка. Обратитесь к администратору.'
+
+@app.route('/root/login')
+def root_login():
+    return render_template('root_login.html')
+
+@app.route('/root/login', methods = ['POST'])
+def proceed_login():
+    login_data = request.form
+    pwd = login_data.get('pwd')
+    print(pwd)
+    if session.get('key') != None:
+        if pwd == session['key']:
+            session['logged'] = True
+            return render_template('root_index.html')
+        else:
+            return("Неправильный код доступа!")
+    else:
+            return("Неправильный код доступа!")
+    
+
+@app.route('/root/logout')
+def proceed_logout():
+    session['logged'] = False
+    return "Вы успешно вышли из личного кабинета"
+
+@app.route('/root/set_ans')
 def set_ans():
     return render_template('set_ans.html')
 
 @app.route('/root')
-def student():
-    return render_template('index.html')
+def root_page():
+    if session.get('logged') != None:
+        if session['logged'] == True:
+            return render_template('root_index.html')
+    return render_template('root_login.html')
 
 @app.route('/submit_answers')
 def submit():
@@ -63,8 +129,20 @@ def submit():
         answers["q"+str(i+1)] = ParseAnswerString(a)
     query['ans'] = answers
     print(query)
+    
+    score = ApplyScore(query['ans'], query['topic'], query['class_n'], query['var'])
+    if score == -1:
+        return(u"Не удалось проверить тест. Убедитесь, что правильно выбраны тема теста (вариант) и отправьте еще раз.")
+    else:
+        try:
+            mail_sender.SendResEmail(query['email'], score, query['topic'])
+        except:
+            print("error with email_sending")
+        return(u"Вы набрали за данный тест "+str(score) +" баллов из 20. Результаты отправлены на указанный email")
+
     if ProceedQuery(query)==-1:
         return(u"Не заданы имя или фамилия. Отправьте еще раз!")
+    
     return(u"Ответ записан")
 
 if __name__ == '__main__':

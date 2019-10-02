@@ -33,32 +33,36 @@ def SendResEmail(receiver_addr, score, test_name):
 	smtpserver.sendmail(msg['From'], msg['To'], msg.as_string())
 	smtpserver.quit()
 
-def CreateAccessCode(receiver_addr):
-
-	msg = MIMEMultipart()
+def CreateAccessCode(receiver_addr, send):
 	acs = os.urandom(64).hex()
-	message = u"Access code is: " + acs
+	if send == True:
+		msg = MIMEMultipart()
+		
+		message = u"Access code is: " + acs
 
-	# setup the parameters of the message
-	msg['From'] = "chemist1567@gmail.com"
-	msg['To'] = receiver_addr
-	msg['Subject'] = "Code for access"
-	 
-	# add in the message body
-	msg.attach(MIMEText(message, 'plain'))
+		# setup the parameters of the message
+		msg['From'] = "chemist1567@gmail.com"
+		msg['To'] = receiver_addr
+		msg['Subject'] = "Code for access"
+		 
+		# add in the message body
+		msg.attach(MIMEText(message, 'plain'))
 
-	#create server
-	#Login Credentials for sending the mail
+		#create server
+		#Login Credentials for sending the mail
 
-	smtpserver = smtplib.SMTP("smtp.gmail.com", 587)
-	smtpserver.ehlo()
-	smtpserver.starttls()
-	smtpserver.ehlo()
-	pwd = "Beredes2Q"
-	smtpserver.login('chemist1567@gmail.com', pwd)
+		smtpserver = smtplib.SMTP("smtp.gmail.com", 587)
+		smtpserver.ehlo()
+		smtpserver.starttls()
+		smtpserver.ehlo()
+		pwd = "Beredes2Q"
+		smtpserver.login('chemist1567@gmail.com', pwd)
 
-	 
-	# send the message via the server.
-	smtpserver.sendmail(msg['From'], msg['To'], msg.as_string())
-	smtpserver.quit()
-	return acs
+		 
+		# send the message via the server.
+		smtpserver.sendmail(msg['From'], msg['To'], msg.as_string())
+		smtpserver.quit()
+		
+	else:
+		print(acs)
+	return(acs)

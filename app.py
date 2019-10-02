@@ -77,6 +77,25 @@ def SaveAns(query, score):
         code = InitializeUser(query['surname'], query['first_name'], query['class_n'])
         return code
 
+def CreateTest(query):
+    pass
+    try:
+        test_name = query.get('test_name')
+        class_n = query.get("class")
+        variant = query.get("variant")
+        deadline = query.get("deadline")
+        answers = {}
+        for i in range(10):
+            a = query.get("q"+str(i+1))
+            answers["q"+str(i+1)] = a
+        print(answers)
+        with open('correct_answers/'+test_name+"_"+str(class_n)+"_"+str(variant)+'.json', "w") as json_file:
+            json.dump(answers, json_file)
+        return 0
+    except Exception as e:
+        print(e)
+        return -1
+
 def Initialize():
     try:
         if os.path.exists('classes_info') == False:
@@ -116,10 +135,12 @@ def index():
 @app.route('/request_code')
 def request_code():
     email = sys.argv[1]
+    send = sys.argv[2]==1
     try:
-        session['key'] = mail_sender.CreateAccessCode(email)
+        session['key'] = mail_sender.CreateAccessCode(email,send)
         return render_template("root_login_sent_code.html")
-    except:
+    except Exception as e:
+        print(e)
         return u'Произошла ошибка. Обратитесь к администратору.'
 
 @app.route('/root/login')
@@ -144,14 +165,27 @@ def proceed_login():
 @app.route('/root/logout')
 def proceed_logout():
     session['logged'] = False
+    session.pop('key')
     return "Вы успешно вышли из личного кабинета"
 
 @app.route('/root/set_ans')
 def set_ans():
     if session.get('key') != None:
-        if pwd == session['key']:
-            session['logged'] = True
+        if session['logged'] == True:
             return render_template('set_ans.html')
+        else:
+            return render_template('root_login.html')
+    else:
+            return render_template('root_login.html')
+
+@app.route('/root/set_ans/submit', methods= ['POST'])
+def create_test():
+    if session.get('key') != None:
+        if session['logged'] == True:
+            if CreateTest(request.form) == 0:
+                return u"Успешно сохранено!"
+            else:
+                return u"Произошла ошибка. Попробуйте еще раз"
         else:
             return render_template('root_login.html')
     else:

@@ -232,7 +232,7 @@ def root_page():
             return render_template('root_index.html')
     return render_template('root_login.html')
 
-@app.route('root/view_stat_class')
+@app.route('/root/view_stat_class')
 def stat_class():
     if session.get('key') != None:
         if session['logged'] == True:

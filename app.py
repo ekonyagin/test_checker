@@ -51,35 +51,40 @@ def InitializeUser(surname, first_name, class_n):
         "tests" : []
     }
     try:
-        fname = "classes_info/class"+str('class_n')+"/"+ 'surname'+"_"+'first_name'+".json"
+        fname = "classes_info/class_"+str(class_n)+"/"+ surname+"_"+first_name+".json"
         with open(fname, 'w') as f:
             json.dump(data, f)
         return 0
-    except:
+    except Exception as e:
+        print(e)
         return -1
 
 def SaveAns(query, score):
-    if CheckExistence(query['surname'], query['first_name'], query['class_n'])==True:
-
-        fname = "classes_info/class"+str(query['class_n'])+"/"+ query['surname']+"_"+query['first_name']+".json"
-        f = open(fname, 'r')
-        data = json.load(f)
-        f.close()
-        test = {'topic' : query['topic'],
-                    'class' : query['class_n'],
-                    'variant' : query['var'],
-                    'answers' : query['ans'],
-                    'score' : score}
-        data['tests'].append(test)
-        with open(fname, 'w') as f:
-            json.dump(data, f)
-        return 0
-    else:
+    if CheckExistence(query['surname'], query['first_name'], query['class_n'])!=True:
+        print("Initializing user...")
         code = InitializeUser(query['surname'], query['first_name'], query['class_n'])
-        return code
+        if code != 0:
+            return code
+
+    fname = "classes_info/class_"+str(query['class_n'])+"/"+ query['surname']+"_"+query['first_name']+".json"
+    f = open(fname, 'r')
+    data = json.load(f)
+    f.close()
+    test_data = {}
+    for i in range(10):
+        test_data['q'+str(i+1)] = list(query['ans']['q'+str(i+1)])
+    test = {'topic' : query['topic'],
+            'class' : query['class_n'],
+            'variant' : query['var'],
+            'answers' : test_data,
+            'score' : score}
+    data['tests'].append(test)
+    with open(fname, 'w') as f:
+        json.dump(data, f)
+    return 0
+   
 
 def CreateTest(query):
-    pass
     try:
         test_name = query.get('test_name')
         class_n = query.get("class")
@@ -164,7 +169,7 @@ def submit():
     if score == -1:
         return(u"Не удалось проверить тест. Убедитесь, что правильно выбраны тема теста (вариант) и отправьте еще раз.")
     else:
-        SaveAns(query, score)
+        print("save code", SaveAns(query, score))
         try:
             mail_sender.SendResEmail(query['email'], score, query['topic'])
         except:

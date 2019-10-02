@@ -9,6 +9,7 @@ import pandas as pd
 import mail_sender
 from transliterate import translit, get_available_language_codes
 import sys
+import stat_creator
 
 app = Flask(__name__)
 app.secret_key = os.urandom(64).hex()
@@ -143,6 +144,38 @@ def request_code():
         print(e)
         return u'Произошла ошибка. Обратитесь к администратору.'
 
+@app.route('/submit_answers')
+def submit():
+    query = OrderedDict()
+    query['first_name'] = translit(request.args.get("first_name").lower(), 'ru', reversed = True)
+    query['surname'] = translit(request.args.get("surname").lower(), 'ru', reversed = True)
+    query['email'] = request.args.get("email").lower()
+    query['class_n'] = request.args.get("class")
+    query['topic'] = request.args.get("test_name")
+    query['var'] = request.args.get("variant")
+    answers = OrderedDict()
+    for i in range(10):
+        a = request.args.get("q"+str(i+1))
+        answers["q"+str(i+1)] = ParseAnswerString(a)
+    query['ans'] = answers
+    print(query)
+    
+    score = ApplyScore(query['ans'], query['topic'], query['class_n'], query['var'])
+    if score == -1:
+        return(u"Не удалось проверить тест. Убедитесь, что правильно выбраны тема теста (вариант) и отправьте еще раз.")
+    else:
+        SaveAns(query, score)
+        try:
+            mail_sender.SendResEmail(query['email'], score, query['topic'])
+        except:
+            print("error with email_sending")
+        return(u"Вы набрали за данный тест "+str(score) +" баллов из 20. Результаты отправлены на указанный email")
+
+    if ProceedQuery(query)==-1:
+        return(u"Не заданы имя или фамилия. Отправьте еще раз!")
+    
+    return(u"Ответ записан")
+
 @app.route('/root/login')
 def root_login():
     return render_template('root_login.html')
@@ -199,37 +232,30 @@ def root_page():
             return render_template('root_index.html')
     return render_template('root_login.html')
 
-@app.route('/submit_answers')
-def submit():
-    query = OrderedDict()
-    query['first_name'] = translit(request.args.get("first_name").lower(), 'ru', reversed = True)
-    query['surname'] = translit(request.args.get("surname").lower(), 'ru', reversed = True)
-    query['email'] = request.args.get("email").lower()
-    query['class_n'] = request.args.get("class")
-    query['topic'] = request.args.get("test_name")
-    query['var'] = request.args.get("variant")
-    answers = OrderedDict()
-    for i in range(10):
-        a = request.args.get("q"+str(i+1))
-        answers["q"+str(i+1)] = ParseAnswerString(a)
-    query['ans'] = answers
-    print(query)
-    
-    score = ApplyScore(query['ans'], query['topic'], query['class_n'], query['var'])
-    if score == -1:
-        return(u"Не удалось проверить тест. Убедитесь, что правильно выбраны тема теста (вариант) и отправьте еще раз.")
+@app.route('root/view_stat_class')
+def stat_class():
+    if session.get('key') != None:
+        if session['logged'] == True:
+            return render_template("root_stat_class.html")
+        else:
+            return "Access denied!"
     else:
-        SaveAns(query, score)
-        try:
-            mail_sender.SendResEmail(query['email'], score, query['topic'])
-        except:
-            print("error with email_sending")
-        return(u"Вы набрали за данный тест "+str(score) +" баллов из 20. Результаты отправлены на указанный email")
+            return "Access denied!"
 
-    if ProceedQuery(query)==-1:
-        return(u"Не заданы имя или фамилия. Отправьте еще раз!")
-    
-    return(u"Ответ записан")
+@app.route('root/view_stat_class/submit', methods = ['POST'])
+def create_stat():
+    args = request.form
+
+@app.route('root/view_stat_student')
+def stat_student():
+    if session.get('key') != None:
+        if session['logged'] == True:
+            return render_template("root_stat_student.html")
+        else:
+            return "Access denied!"
+    else:
+            return "Access denied!"
+
 
 if __name__ == '__main__':
     Initialize()

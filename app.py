@@ -242,7 +242,7 @@ def stat_class():
     else:
             return "Access denied!"
 
-@app.route('root/view_stat_class/submit', methods = ['POST'])
+@app.route('/root/view_stat_class/submit', methods = ['POST'])
 def create_stat():
     args = request.form
 

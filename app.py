@@ -23,7 +23,6 @@ def Score(ans,correct_ans):
 
 def ApplyScore(answers, test_name,class_n, var):
     try:
-        #print('correct_answers/'+test_name+"_"+str(var)+'.json')
         with open('correct_answers/'+test_name+"_"+str(class_n)+"_"+str(var)+'.json') as json_file:
             raw_answers = json.load(json_file)
             print(raw_answers)
@@ -38,16 +37,59 @@ def ApplyScore(answers, test_name,class_n, var):
         score += Score(answers['q'+str(i+1)], correct_answers["q"+str(i+1)])
     return score
 
-def Initialize():
-    
-    if os.path.exists('classes_info') == False:
-        os.mkdir('classes_info')
-        for i in range(8,12):
-            os.mkdir('classes_info/class_'+str(i))
-        os.mkdir('classes_info/other')
+def CheckExistence(surname, first_name, class_n):
+    if os.path.exists("classes_info/class"+str(class_n)+"/"+ surname+"_"+first_name+".json"):
+        return True
+    return False
 
-    if os.path.exists('correct_answers') == False:
-        os.mkdir('correct_answers')
+def InitializeUser(surname, first_name, class_n):
+    data = {
+        "surname" : surname,
+        "first_name" : first_name,
+        "class_n" : class_n,
+        "tests" : []
+    }
+    try:
+        fname = "classes_info/class"+str('class_n')+"/"+ 'surname'+"_"+'first_name'+".json"
+        with open(fname, 'w') as f:
+            json.dump(data, f)
+        return 0
+    except:
+        return -1
+
+def SaveAns(query, score):
+    if CheckExistence(query['surname'], query['first_name'], query['class_n'])==True:
+
+        fname = "classes_info/class"+str(query['class_n'])+"/"+ query['surname']+"_"+query['first_name']+".json"
+        f = open(fname, 'r')
+        data = json.load(f)
+        f.close()
+        test = {'topic' : query['topic'],
+                    'class' : query['class_n'],
+                    'variant' : query['var'],
+                    'answers' : query['ans'],
+                    'score' : score}
+        data['tests'].append(test)
+        with open(fname, 'w') as f:
+            json.dump(data, f)
+        return 0
+    else:
+        code = InitializeUser(query['surname'], query['first_name'], query['class_n'])
+        return code
+
+def Initialize():
+    try:
+        if os.path.exists('classes_info') == False:
+            os.mkdir('classes_info')
+            for i in range(8,12):
+                os.mkdir('classes_info/class_'+str(i))
+            os.mkdir('classes_info/other')
+
+        if os.path.exists('correct_answers') == False:
+            os.mkdir('correct_answers')
+        return 0
+    except:
+        return -1
 
 def ParseAnswerString(ans_str):
     Answers = set()
@@ -63,6 +105,7 @@ def ProceedQuery(query):
     if query['first_name'] and query['surname']:
 
         class_n = query['class_n']
+        return 0
     else:
         return -1
 
@@ -105,7 +148,15 @@ def proceed_logout():
 
 @app.route('/root/set_ans')
 def set_ans():
-    return render_template('set_ans.html')
+    if session.get('key') != None:
+        if pwd == session['key']:
+            session['logged'] = True
+            return render_template('set_ans.html')
+        else:
+            return render_template('root_login.html')
+    else:
+            return render_template('root_login.html')
+
 
 @app.route('/root')
 def root_page():
@@ -134,6 +185,7 @@ def submit():
     if score == -1:
         return(u"Не удалось проверить тест. Убедитесь, что правильно выбраны тема теста (вариант) и отправьте еще раз.")
     else:
+        SaveAns(query, score)
         try:
             mail_sender.SendResEmail(query['email'], score, query['topic'])
         except:

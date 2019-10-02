@@ -246,7 +246,7 @@ def stat_class():
 def create_stat():
     args = request.form
 
-@app.route('root/view_stat_student')
+@app.route('/root/view_stat_student')
 def stat_student():
     if session.get('key') != None:
         if session['logged'] == True:

@@ -62,14 +62,16 @@ def InitializeUser(surname, first_name, class_n):
         print(e)
         return -1
 
-def SaveAns(query, score):
+def SaveAns(query, score, late=False):
     if CheckExistence(query['surname'], query['first_name'], query['class_n'])!=True:
         print("Initializing user...")
         code = InitializeUser(query['surname'], query['first_name'], query['class_n'])
         if code != 0:
             return code
-
-    fname = "classes_info/class_"+str(query['class_n'])+"/"+ query['surname']+"_"+query['first_name']+".json"
+    if late == False:
+        fname = "classes_info/class_"+str(query['class_n'])+"/"+ query['surname']+"_"+query['first_name']+".json"
+    if late == True:
+        fname = "collected_answers/"+ query['surname']+"_"+query['first_name']+str(query['class_n'])+query['topic']+".json"
     f = open(fname, 'r')
     data = json.load(f)
     f.close()
@@ -106,6 +108,13 @@ def CreateTest(query):
         print(answers)
         with open('correct_answers/'+test_name+"_"+str(class_n)+"_"+str(variant)+'.json', "w") as json_file:
             json.dump(answers, json_file)
+        
+        with open('topics.json','r+') as json_file:
+            f = json.load(json_file)
+            json_file.seek(0)
+            f['t'+str(len(f)+1)] = test_name
+            json.dump(f, json_file)
+            json_file.truncate()
         return 0
     except Exception as e:
         print(e)
@@ -121,6 +130,10 @@ def Initialize():
 
         if os.path.exists('correct_answers') == False:
             os.mkdir('correct_answers')
+        if os.path.exists('collected_answers') == False:
+            os.mkdir('collected_answers')
+        if os.path.exists('topics.json') == False:
+            os.system('touch topics.json')
         return 0
     except:
         return -1
@@ -196,6 +209,9 @@ def request_code():
     except Exception as e:
         print(e)
         return u'Произошла ошибка. Обратитесь к администратору.'
+@app.route('/request_topics')
+def request_topics():
+    return send_file('topics.json')
 
 @app.route('/submit_answers')
 def submit():
@@ -207,8 +223,10 @@ def submit():
     query['topic'] = request.args.get("test_name")
     query['var'] = request.args.get("variant")
     ddl =  open('correct_answers/'+query['topic']+"_"+str(query['class_n'])+"_"+str(query['var'])+'.deadline', "r")
-    deadline =datetime.strptime(ddl.readline(), "%Y-%M-%d")
+    deadline = datetime.strptime(ddl.readline(), "%Y-%m-%d")
     late_submit = datetime.now() > deadline
+    print(deadline)
+    print(late_submit)
     answers = OrderedDict()
     for i in range(10):
         a = request.args.get("q"+str(i+1))
@@ -220,7 +238,7 @@ def submit():
     if score == -1:
         return(u"Не удалось проверить тест. Убедитесь, что правильно выбраны тема теста (вариант) и отправьте еще раз.")
     else:
-        print("save code", SaveAns(query, score))
+        print("save code", SaveAns(query, score, late_submit))
         try:
             mail_sender.SendResEmail(query['email'], score, query['topic'])
         except:

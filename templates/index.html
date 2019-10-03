@@ -1,12 +1,12 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <title>video</title>
+  <title>Test</title>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
-  <script src="{{ url_for('static', filename='hide_params1.js') }}"></script>
+  <!script src="{{ url_for('static', filename='request_topics.js') }}"></script>
   
   
 </head>
@@ -39,10 +39,27 @@
   
 
 
+    <script>
+      
 
+    $.getJSON("/request_topics",
+      function (json) {
+          $.each(json,
+          function (key, value) {
+          console.log(key)
+          console.log(value)
+          $("#test_name").append("<option value='"+value+"'>" +value + "</option>");
+          });
+    });
+
+
+
+    </script>
     <div class="form-group">
       <label for="source">Тема теста:</label>
-      <input type="text" class="form-control" id="test_name" placeholder="Введите тему теста" name="test_name">
+      <select id="test_name" name="test_name">
+            
+      </select>
     </div>
 
     <div class="form-group">

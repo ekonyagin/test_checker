@@ -1,5 +1,5 @@
 import datetime
-from flask import Flask, render_template, request, session
+from flask import Flask, render_template, request, session, send_file
 import requests
 import json
 import socket
@@ -300,7 +300,22 @@ def stat_class():
 
 @app.route('/root/view_stat_class/submit', methods = ['POST'])
 def create_stat():
-    args = request.form
+    if session.get('key') != None:
+        if session['logged'] == True:
+            r = request.form
+            class_n = r.get('class_n')
+            try:
+                if(stat_creator.CreateStat(class_n)==0):
+                    return send_file("class_"+str(class_n)+".xlsx")
+            except:
+                return "A problem has occured"
+        else:
+            return "Access denied!"
+    else:
+            return "Access denied!"
+
+
+    
 
 @app.route('/root/view_stat_student')
 def stat_student():

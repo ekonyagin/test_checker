@@ -10,6 +10,7 @@ import mail_sender
 from transliterate import translit, get_available_language_codes
 import sys
 import stat_creator
+from datetime import datetime, timedelta
 
 app = Flask(__name__)
 app.secret_key = os.urandom(64).hex()
@@ -39,9 +40,11 @@ def ApplyScore(answers, test_name,class_n, var):
     return score
 
 def CheckExistence(surname, first_name, class_n):
-    if os.path.exists("classes_info/class"+str(class_n)+"/"+ surname+"_"+first_name+".json"):
+    if os.path.exists("classes_info/class_"+str(class_n)+"/"+ surname+"_"+first_name+".json"):
         return True
+    print("Doesn't exist")
     return False
+
 
 def InitializeUser(surname, first_name, class_n):
     data = {
@@ -78,6 +81,10 @@ def SaveAns(query, score):
             'variant' : query['var'],
             'answers' : test_data,
             'score' : score}
+    for i in range(len(data['tests'])):
+        if data['tests'][i]['topic'] == test['topic']:
+            del data['tests'][i]
+            break
     data['tests'].append(test)
     with open(fname, 'w') as f:
         json.dump(data, f)
@@ -86,10 +93,12 @@ def SaveAns(query, score):
 
 def CreateTest(query):
     try:
-        test_name = query.get('test_name')
+        test_name = query.get('test_name').lower()
         class_n = query.get("class")
         variant = query.get("variant")
-        deadline = query.get("deadline")
+        
+        with open('correct_answers/'+test_name+"_"+str(class_n)+"_"+str(variant)+'.deadline', "w") as ddl:
+            ddl.write(query.get("deadline"))
         answers = {}
         for i in range(10):
             a = query.get("q"+str(i+1))
@@ -124,7 +133,46 @@ def ParseAnswerString(ans_str):
                 Answers.add(i)
         except:
             pass
-    return Answers
+    return set(sorted(Answers))
+
+def SearchVar(tests, test_name):
+    for test in tests:
+        if test['topic'] == test_name:
+            return test['answers'], test['variant']
+        #else:
+        #   raise ValueError("No such test")
+
+def RetrieveCorrectAnsStr(class_n, test_name, var):
+    with open('correct_answers/'+test_name+"_"+str(class_n)+"_"+str(var)+'.json', "r") as json_file:
+            a = json.load(json_file)
+            ans_str = []
+            for i in range(10):
+                ans_str.append(a["q"+str(i+1)])
+            return ans_str
+
+def CreateStatString(query):
+    first_name = translit(query.args.get("first_name").lower(), 'ru', reversed = True)
+    surname = translit(query.args.get("surname").lower(), 'ru', reversed = True)
+    class_n = query.args.get("class")
+    test_name = query.args.get("test_name").lower()
+    fname = "classes_info/class_"+str(class_n)+"/"+ surname+"_"+first_name+".json"
+    with open(fname, 'r') as f:
+        file = json.load(f)
+        try:
+            print("Searching...")
+            ans, var  = SearchVar(file['tests'], test_name)
+            print("Got answ", ans,var)
+            correct_answers = RetrieveCorrectAnsStr(class_n, test_name, var)
+            print("successfully retrieved answers!")
+            stat_str = surname + " " + first_name + "<br>"
+            for i in range(10):
+                string = "Question " + str(i+1)+": " + str(ans["q"+str(i+1)]) + " (correct: " + str(ParseAnswerString(correct_answers[i])) + ")"
+                stat_str += string
+                stat_str += "<br>"
+            return stat_str.replace("\n", "\n")
+        except Exception as e:
+            print(e)
+            return u"Ответов на указанный тест у выбранного ученика нет!"
 
 def ProceedQuery(query):
     if query['first_name'] and query['surname']:
@@ -158,6 +206,9 @@ def submit():
     query['class_n'] = request.args.get("class")
     query['topic'] = request.args.get("test_name")
     query['var'] = request.args.get("variant")
+    ddl =  open('correct_answers/'+query['topic']+"_"+str(query['class_n'])+"_"+str(query['var'])+'.deadline', "r")
+    deadline =datetime.strptime(ddl.readline(), "%Y-%M-%d")
+    late_submit = datetime.now() > deadline
     answers = OrderedDict()
     for i in range(10):
         a = request.args.get("q"+str(i+1))
@@ -256,6 +307,16 @@ def stat_student():
     if session.get('key') != None:
         if session['logged'] == True:
             return render_template("root_stat_student.html")
+        else:
+            return "Access denied!"
+    else:
+            return "Access denied!"
+
+@app.route("/root/view_stat_student/submit")
+def RequestStudentAns():
+    if session.get('key') != None:
+        if session['logged'] == True:
+            return CreateStatString(request)
         else:
             return "Access denied!"
     else:

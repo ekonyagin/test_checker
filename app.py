@@ -248,13 +248,15 @@ def index():
 @app.route('/request_code')
 def request_code():
     email = sys.argv[1]
-    send = sys.argv[2]==1
+    ##send = sys.argv[2]==1
+    send == True
     try:
         session['key'] = mail_sender.CreateAccessCode(email,send)
         return render_template("root_login_sent_code.html")
     except Exception as e:
         print(e)
         return u'Произошла ошибка. Обратитесь к администратору.'
+
 @app.route('/request_topics')
 def request_topics():
     return send_file('topics.json')

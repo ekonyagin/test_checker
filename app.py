@@ -15,6 +15,22 @@ from datetime import datetime, timedelta
 app = Flask(__name__)
 app.secret_key = os.urandom(64).hex()
 
+def ProceedDebt(query):
+    Query = {}
+    data = query.split()
+    class_n = data[0]
+    surname = translit(data[1].lower(), 'ru', reversed = True)
+    first_name = translit(data[2].lower(), 'ru', reversed = True)
+    topic = data[3]
+    var = data[4]
+    Query['surname'] = surname
+    Query['first_name'] = first_name
+    Query['class_n'] = class_n
+    Query['topic'] = topic
+    Query['var'] = var
+    file = "collected_answers/"+ surname+"_"+first_name+str(class_n)+topic+"_"+str(var)+".json"
+    return Query,file
+
 def Score(ans,correct_ans):
     if(len(ans - correct_ans)) !=0 or len(ans) == 0:
         return 0
@@ -39,14 +55,19 @@ def ApplyScore(answers, test_name,class_n, var):
         score += Score(answers['q'+str(i+1)], correct_answers["q"+str(i+1)])
     return score
 
-def CheckExistence(surname, first_name, class_n):
-    if os.path.exists("classes_info/class_"+str(class_n)+"/"+ surname+"_"+first_name+".json"):
-        return True
+def CheckExistence(surname, first_name, class_n, topic,var, late):
+    if late == False:
+        if os.path.exists("classes_info/class_"+str(class_n)+"/"+ surname+"_"+first_name+".json"):
+            return True
+    if late == True:
+        print("collected_answers/"+ surname+"_"+first_name+str(class_n)+topic+"_"+str(var)+".json")
+        if os.path.exists("collected_answers/"+ surname+"_"+first_name+str(class_n)+topic+"_"+str(var)+".json"):
+            return True
     print("Doesn't exist")
     return False
 
 
-def InitializeUser(surname, first_name, class_n):
+def InitializeUser(surname, first_name, class_n, topic,var, late):
     data = {
         "surname" : surname,
         "first_name" : first_name,
@@ -54,43 +75,56 @@ def InitializeUser(surname, first_name, class_n):
         "tests" : []
     }
     try:
-        fname = "classes_info/class_"+str(class_n)+"/"+ surname+"_"+first_name+".json"
+        if late == False:
+            fname = "classes_info/class_"+str(class_n)+"/"+ surname+"_"+first_name+".json"
+        else:
+            fname = "collected_answers/"+ surname+"_"+first_name+str(class_n)+topic+"_"+str(var)+".json"
         with open(fname, 'w') as f:
             json.dump(data, f)
         return 0
     except Exception as e:
         print(e)
         return -1
+def MarkedLate(class_n, surname, first_name, topic, var, score):
+    with open('collected_answers/info.log', 'a') as f:
+        string = str(class_n)+" " + surname + " " + first_name +" " + topic + " " + str(var) + " " + score + "\n"
+        f.write(string)
+
 
 def SaveAns(query, score, late=False):
-    if CheckExistence(query['surname'], query['first_name'], query['class_n'])!=True:
+    exist = CheckExistence(query['surname'], query['first_name'], query['class_n'], query['topic'],query['var'], late)
+    if exist !=True:
         print("Initializing user...")
-        code = InitializeUser(query['surname'], query['first_name'], query['class_n'])
+        code = InitializeUser(query['surname'], query['first_name'], query['class_n'], query['topic'], query['var'], late)
         if code != 0:
             return code
     if late == False:
         fname = "classes_info/class_"+str(query['class_n'])+"/"+ query['surname']+"_"+query['first_name']+".json"
     if late == True:
-        fname = "collected_answers/"+ query['surname']+"_"+query['first_name']+str(query['class_n'])+query['topic']+".json"
-    f = open(fname, 'r')
-    data = json.load(f)
-    f.close()
-    test_data = {}
-    for i in range(10):
-        test_data['q'+str(i+1)] = list(query['ans']['q'+str(i+1)])
-    test = {'topic' : query['topic'],
-            'class' : query['class_n'],
-            'variant' : query['var'],
-            'answers' : test_data,
-            'score' : score}
-    for i in range(len(data['tests'])):
-        if data['tests'][i]['topic'] == test['topic']:
-            del data['tests'][i]
-            break
-    data['tests'].append(test)
-    with open(fname, 'w') as f:
-        json.dump(data, f)
-    return 0
+        fname = "collected_answers/"+ query['surname']+"_"+query['first_name']+str(query['class_n'])+query['topic']+"_"+str(query['var'])+".json"
+    if exist * late == False:
+        f = open(fname, 'r')
+        data = json.load(f)
+        f.close()
+        test_data = {}
+        for i in range(10):
+            test_data['q'+str(i+1)] = list(query['ans']['q'+str(i+1)])
+        test = {'topic' : query['topic'],
+                'class' : query['class_n'],
+                'variant' : query['var'],
+                'answers' : test_data,
+                'score' : score}
+        for i in range(len(data['tests'])):
+            if data['tests'][i]['topic'] == test['topic']:
+                del data['tests'][i]
+                break
+        data['tests'].append(test)
+        with open(fname, 'w') as f:
+            json.dump(data, f)
+        return 0
+    else:
+        return 2
+    
    
 
 def CreateTest(query):
@@ -134,6 +168,8 @@ def Initialize():
             os.mkdir('collected_answers')
         if os.path.exists('topics.json') == False:
             os.system('touch topics.json')
+        if os.path.exists('collected_answers/info.log') == False:
+            os.system('touch collected_answers/info.log')
         return 0
     except:
         return -1
@@ -151,7 +187,7 @@ def ParseAnswerString(ans_str):
 def SearchVar(tests, test_name):
     for test in tests:
         if test['topic'] == test_name:
-            return test['answers'], test['variant']
+            return test['answers'], test['variant'], test['score']
         #else:
         #   raise ValueError("No such test")
 
@@ -163,17 +199,25 @@ def RetrieveCorrectAnsStr(class_n, test_name, var):
                 ans_str.append(a["q"+str(i+1)])
             return ans_str
 
-def CreateStatString(query):
-    first_name = translit(query.args.get("first_name").lower(), 'ru', reversed = True)
-    surname = translit(query.args.get("surname").lower(), 'ru', reversed = True)
-    class_n = query.args.get("class")
-    test_name = query.args.get("test_name").lower()
-    fname = "classes_info/class_"+str(class_n)+"/"+ surname+"_"+first_name+".json"
+def CreateStatString(query, filename = None):
+    
+    if filename == None:
+        first_name = translit(query.args.get("first_name").lower(), 'ru', reversed = True)
+        surname = translit(query.args.get("surname").lower(), 'ru', reversed = True)
+        class_n = query.args.get("class")
+        test_name = query.args.get("test_name").lower()
+        fname = "classes_info/class_"+str(class_n)+"/"+ surname+"_"+first_name+".json"
+    else:
+        fname = filename
+        first_name = query['first_name']
+        surname = query['surname']
+        class_n = query['class_n']
+        test_name = query['topic']
     with open(fname, 'r') as f:
         file = json.load(f)
         try:
             print("Searching...")
-            ans, var  = SearchVar(file['tests'], test_name)
+            ans, var, score  = SearchVar(file['tests'], test_name)
             print("Got answ", ans,var)
             correct_answers = RetrieveCorrectAnsStr(class_n, test_name, var)
             print("successfully retrieved answers!")
@@ -182,6 +226,8 @@ def CreateStatString(query):
                 string = "Question " + str(i+1)+": " + str(ans["q"+str(i+1)]) + " (correct: " + str(ParseAnswerString(correct_answers[i])) + ")"
                 stat_str += string
                 stat_str += "<br>"
+            stat_str += "Score: "
+            stat_str += str(score)
             return stat_str.replace("\n", "\n")
         except Exception as e:
             print(e)
@@ -216,17 +262,22 @@ def request_topics():
 @app.route('/submit_answers')
 def submit():
     query = OrderedDict()
+    first_name = request.args.get("first_name")
+    surname = request.args.get("surname")
     query['first_name'] = translit(request.args.get("first_name").lower(), 'ru', reversed = True)
     query['surname'] = translit(request.args.get("surname").lower(), 'ru', reversed = True)
     query['email'] = request.args.get("email").lower()
     query['class_n'] = request.args.get("class")
     query['topic'] = request.args.get("test_name")
     query['var'] = request.args.get("variant")
-    ddl =  open('correct_answers/'+query['topic']+"_"+str(query['class_n'])+"_"+str(query['var'])+'.deadline', "r")
-    deadline = datetime.strptime(ddl.readline(), "%Y-%m-%d")
-    late_submit = datetime.now() > deadline
-    print(deadline)
-    print(late_submit)
+    try:
+        ddl =  open('correct_answers/'+query['topic']+"_"+str(query['class_n'])+"_"+str(query['var'])+'.deadline', "r")
+        deadline = datetime.strptime(ddl.readline(), "%Y-%m-%d")
+        late_submit = datetime.now() > deadline
+        print(deadline)
+        print(late_submit)
+    except:
+        return(u"Не удалось проверить тест. Убедитесь, что правильно выбраны тема теста (класс, вариант) и отправьте еще раз.")
     answers = OrderedDict()
     for i in range(10):
         a = request.args.get("q"+str(i+1))
@@ -238,17 +289,33 @@ def submit():
     if score == -1:
         return(u"Не удалось проверить тест. Убедитесь, что правильно выбраны тема теста (вариант) и отправьте еще раз.")
     else:
-        print("save code", SaveAns(query, score, late_submit))
-        try:
-            mail_sender.SendResEmail(query['email'], score, query['topic'])
-        except:
-            print("error with email_sending")
-        return(u"Вы набрали за данный тест "+str(score) +" баллов из 20. Результаты отправлены на указанный email")
+        code = SaveAns(query, score, late_submit)
+        print("save code", code)
+        if late_submit==False:
+            try:
+                mail_sender.SendResEmail(query['email'], score, query['topic'])
+            except:
+                print("error with email_sending")
+            return(u"Вы набрали за данный тест "+str(score) +" баллов из 20. Результаты отправлены на указанный email")
+        if code == 2:
+            return(u"Повторная поздняя подача не допускается.")
+        MarkedLate(query['class_n'], surname, first_name, query['topic'], query['var'], score)
+        return(u"Вы отправили тест после дедлайна. Оценка будет выставлена после консультации с преподавателем.")
 
     if ProceedQuery(query)==-1:
         return(u"Не заданы имя или фамилия. Отправьте еще раз!")
     
     return(u"Ответ записан")
+
+def MakeDebtsJson():
+    with open("collected_answers/info.log") as f:
+        q = {}
+        key = 0
+        for i in f:
+            print(i.replace("\n", ""))
+            q[key] = i.replace("\n", "")
+            key+=1
+        return json.dumps(q)
 
 @app.route('/root/login')
 def root_login():
@@ -284,6 +351,7 @@ def set_ans():
             return render_template('root_login.html')
     else:
             return render_template('root_login.html')
+
 
 @app.route('/root/set_ans/submit', methods= ['POST'])
 def create_test():
@@ -355,6 +423,32 @@ def RequestStudentAns():
     else:
             return "Access denied!"
 
+@app.route('/root/view_debt_list')
+def view_debt_list():
+    if session.get('key') != None:
+        if session['logged'] == True:
+            return render_template("root_debts.html")
+        else:
+            return "Access denied!"
+    else:
+        return "Access denied!"
+
+@app.route("/root/view_debt_list/submit")
+def proceed_debt():
+    query = request.args.get('submit')
+    Query,file = ProceedDebt(query)
+    return(CreateStatString(Query, file))
+
+
+@app.route('/root/request_debts')
+def request_debts():
+    if session.get('key') != None:
+        if session['logged'] == True:
+            return MakeDebtsJson()
+        else:
+            return "Access denied!"
+    else:
+            return "Access denied!"
 
 if __name__ == '__main__':
     Initialize()

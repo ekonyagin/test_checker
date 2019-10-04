@@ -249,7 +249,7 @@ def index():
 def request_code():
     email = sys.argv[1]
     ##send = sys.argv[2]==1
-    send == True
+    send = True
     try:
         session['key'] = mail_sender.CreateAccessCode(email,send)
         return render_template("root_login_sent_code.html")

@@ -398,7 +398,8 @@ def create_stat():
             try:
                 if(stat_creator.CreateStat(class_n)==0):
                     return send_file("class_"+str(class_n)+".xlsx")
-            except:
+            except Exception as e:
+                print("XLS exception:",e)
                 return "A problem has occured"
         else:
             return "Access denied!"

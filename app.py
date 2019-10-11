@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import datetime
 from flask import Flask, render_template, request, session, send_file
 import requests
@@ -259,7 +260,9 @@ def request_code():
 
 @app.route('/request_topics')
 def request_topics():
-    return send_file('topics.json')
+    with open('topics.json') as f:
+        f = json.load(f)
+        return json.dumps(f)
 
 @app.route('/submit_answers')
 def submit():

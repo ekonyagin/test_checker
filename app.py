@@ -88,7 +88,7 @@ def InitializeUser(surname, first_name, class_n, topic,var, late):
         return -1
 def MarkedLate(class_n, surname, first_name, topic, var, score):
     with open('collected_answers/info.log', 'a') as f:
-        string = str(class_n)+" " + surname + " " + first_name +" " + topic + " " + str(var) + " " + score + "\n"
+        string = str(class_n)+" " + surname + " " + first_name +" " + topic + " " + str(var) + " " + str(score) + "\n"
         f.write(string)
 
 
